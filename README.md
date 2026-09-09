@@ -1,0 +1,2 @@
+# WindowsGSM.ProjectZomboid-MeFriendos
+WindowsGSM plugin for installing, updating and running a Project Zomboid dedicated server through SteamCMD.  This MeFriendos build is based on `WindowsGSM.ProjectZomboid` by Richard Beard. It keeps the original server behavior and removes unrestricted Windows Firewall application rules that WindowsGSM creates for the bundled `java.exe` when the server starts.
