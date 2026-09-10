@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/WindowsGSM/WindowsGSM"><img src="https://img.shields.io/badge/WindowsGSM-%E2%89%A51.21-38CDD4" alt="WindowsGSM 1.21+"></a>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.1.0-EF3F28" alt="Version 0.1.0"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.1.1-EF3F28" alt="Version 0.1.1"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
 </p>
 
@@ -23,7 +23,7 @@ This plugin installs, updates and runs the Project Zomboid dedicated server thro
 - Supports the embedded WindowsGSM console and graceful shutdown.
 - Passes the configured WindowsGSM game port to Project Zomboid.
 - Keeps the server configuration and saves inside the WindowsGSM server directory.
-- Removes WindowsGSM's broad automatic `java.exe` firewall rule before Java starts listening.
+- Removes WindowsGSM's automatic firewall application exception for the exact bundled `java.exe` before Java starts listening.
 - Leaves targeted manual firewall rules unchanged.
 
 ## Quick overview
@@ -66,18 +66,13 @@ SteamCMD updates the dedicated-server files. The plugin does not intentionally m
 
 ## Security: automatic port opening is disabled
 
-WindowsGSM creates an inbound application rule for the server's bundled `jre64\bin\java.exe` before calling the plugin's start method. A broad application rule can allow every listening Java port instead of only the ports intended for Project Zomboid.
+WindowsGSM creates an application exception for the server's bundled `jre64\bin\java.exe` before calling the plugin's start method. This build removes that exact program exception before Java starts listening.
 
-This build removes only broad inbound **Allow** rules on any network profile when all of the following match:
+The cleanup uses the same Windows Firewall COM API family (`HNetCfg.FwMgr`) that WindowsGSM uses for its own automatic application rules. It does not depend on the PowerShell `NetSecurity` cmdlets.
 
-- the rule points to this server's exact bundled `java.exe` path;
-- the local port is `Any`;
-- the local address is `Any`;
-- the remote address is `Any`.
+Manual port rules are not created or removed by the plugin. Rules for other Java installations or other WindowsGSM servers are not selected because the exact executable path must match.
 
-Port-specific and address-restricted manual rules are preserved. Rules belonging to other Java installations or other WindowsGSM servers are not selected.
-
-If Windows cannot verify or remove a matching broad rule, the plugin stops the launch and reports an error. This prevents the server from starting with an unknown firewall state and is why WindowsGSM must run as administrator.
+After removing the application exception, the plugin checks the authorized-application list again. If Windows cannot verify or remove the matching exception, startup is stopped and an error is reported. WindowsGSM should therefore run as administrator.
 
 The plugin does **not** create game-port or RCON rules. This is intentional: a narrow rule for a known port, protocol, network profile and remote scope is safer than allowing the complete Java runtime through the firewall.
 
@@ -127,9 +122,9 @@ Start the dedicated server once so Project Zomboid can generate its default file
 - Install and Update complete through SteamCMD.
 - The embedded console receives Project Zomboid server output.
 - The server is reachable through the manually configured game ports.
-- No unrestricted inbound rule remains for this server's bundled `java.exe` after startup.
-- Port-specific and address-restricted manual rules remain present.
-- A forced firewall-cleanup failure prevents the Java process from starting.
+- No automatic application exception remains for this server's bundled `java.exe` after startup.
+- Manually configured port rules remain present.
+- A firewall-cleanup failure prevents the Java process from starting.
 - RCON works over the Private VPN connection and remains unavailable publicly.
 
 ## Project links
